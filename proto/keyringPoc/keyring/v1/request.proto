@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package keyring.v1;
+
+option go_package = "github.com/zondax/keyringPoc/keyring";
+
+import "cosmos/crypto/keyring/v1/record.proto";
+
+message Empty {}
+
+message BackendRequest {
+  Empty f = 1;
+}
+
+message BackendResponse {
+  string backend = 1;
+}
+
+message KeyRequest {
+  string uid = 1;
+}
+
+message KeyResponse {
+  cosmos.crypto.keyring.v1.Record record = 1;
+}
+
+message NewAccountRequest {
+  string uid = 1;
+  string mnemonic = 2;
+  string bip39Passphrase = 3;
+  string hdpath = 4;
+}
+
+message NewAccountResponse {
+  cosmos.crypto.keyring.v1.Record record = 1;
+}

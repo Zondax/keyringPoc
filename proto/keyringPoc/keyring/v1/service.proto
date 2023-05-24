@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package keyring.v1;
+
+option go_package = "github.com/zondax/keyringPoc/keyring";
+import "keyringPoc/keyring/v1/request.proto";
+
+service KeyringService {
+    rpc Backend(BackendRequest) returns (BackendResponse);
+//    List() ([]*Record, error)
+//
+//    SupportedAlgorithms() (SigningAlgoList, SigningAlgoList)
+//
+    rpc Key(KeyRequest) returns (KeyResponse);
+//    KeyByAddress(address sdk.Address) (*Record, error)
+//
+//    Delete(uid string) error
+//    DeleteByAddress(address sdk.Address) error
+//
+//    Rename(from, to string) error
+//
+//
+//    NewMnemonic(uid string, language Language, hdPath, bip39Passphrase string, algo SignatureAlgo) (*Record, string, error)
+
+
+    rpc NewAccount(NewAccountRequest) returns (NewAccountResponse);
+
+//    SaveLedgerKey(uid string, algo SignatureAlgo, hrp string, coinType, account, index uint32) (*Record, error)
+//
+//    SaveOfflineKey(uid string, pubkey types.PubKey) (*Record, error)
+//
+//    SaveMultisig(uid string, pubkey types.PubKey) (*Record, error)
+}
