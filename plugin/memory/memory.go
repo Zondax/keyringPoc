@@ -10,7 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/hashicorp/go-plugin"
-	keyring2 "github.com/zondax/keyringPoc/keyring"
+	plugin2 "github.com/zondax/keyringPoc/keyring/grpc"
+	keyring2 "github.com/zondax/keyringPoc/keyring/types"
 )
 
 type keyring struct {
@@ -83,11 +84,11 @@ func (k keyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAccount
 
 func main() {
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: keyring2.Handshake,
+		HandshakeConfig: plugin2.Handshake,
 		Plugins: map[string]plugin.Plugin{
-			"keyring": &keyring2.KeyringGRPC{Impl: NewKeyring()},
+			"keyring": &plugin2.KeyringGRPC{Impl: NewKeyring()},
 		},
-		// A non-nil value here enables gRPC serving for this plugin...
+		// A non-nil value here enables gRPC serving for this keyStore...
 		GRPCServer: plugin.DefaultGRPCServer,
 	})
 }

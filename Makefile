@@ -5,3 +5,6 @@ protoImage=docker run --network host --rm -v $(CURDIR):/workspace --workdir /wor
 proto-gen:
 	@echo "Generating Protobuf files"
 	$(protoImage) sh ./protocgen.sh
+
+plugin-go-memory:
+		go build -o build/memoryGo plugin/memory/memory.go

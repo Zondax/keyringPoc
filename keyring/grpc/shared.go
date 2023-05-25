@@ -1,40 +1,35 @@
-package keyring
+package grpc
 
 import (
 	"context"
 	"github.com/hashicorp/go-plugin"
+	"github.com/zondax/keyringPoc/keyring"
+	"github.com/zondax/keyringPoc/keyring/types"
 	"google.golang.org/grpc"
 )
 
-// Handshake is a common handshake that is shared by plugin and host.
+// Handshake is a common handshake that is shared by keyStore and host.
 var Handshake = plugin.HandshakeConfig{
 	// This isn't required when using VersionedPlugins
 	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
+	MagicCookieKey:   "BASIC_PLUGIN", // TODO
+	MagicCookieValue: "hello",        // TODO
 }
 
 var PluginMap = map[string]plugin.Plugin{
 	"keyring": &KeyringGRPC{},
 }
 
-// Keyring is the plugins interface
-type Keyring interface {
-	Backend(*BackendRequest) (*BackendResponse, error)
-	Key(*KeyRequest) (*KeyResponse, error)
-	NewAccount(*NewAccountRequest) (*NewAccountResponse, error)
-}
-
 type KeyringGRPC struct {
 	plugin.Plugin
-	Impl Keyring
+	Impl keyring.PluginKeyring
 }
 
 func (p *KeyringGRPC) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
-	RegisterKeyringServiceServer(s, &GRPCServer{Impl: p.Impl})
+	types.RegisterKeyringServiceServer(s, &Server{Impl: p.Impl})
 	return nil
 }
 
 func (p *KeyringGRPC) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return &GRPCClient{Client: NewKeyringServiceClient(c)}, nil
+	return &Client{Client: types.NewKeyringServiceClient(c)}, nil
 }

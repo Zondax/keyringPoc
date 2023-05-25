@@ -7,17 +7,17 @@ import (
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/go-bip39"
-	keyring2 "github.com/zondax/keyringPoc/keyring"
+	"github.com/zondax/keyringPoc/keyring/keyStore"
 )
 
 func main() {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
 
-	k := keyring2.NewKeyring("./memory", codec.NewProtoCodec(registry))
+	k := keyStore.NewKeyring("./build/memoryGo", codec.NewProtoCodec(registry))
 	defer k.Close()
 
-	// Get the backend of the plugin
+	// Get the backend of the keyStore
 	back := k.Backend()
 	fmt.Println(back)
 
