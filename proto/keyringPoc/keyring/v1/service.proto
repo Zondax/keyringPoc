@@ -3,6 +3,7 @@ syntax = "proto3";
 package keyring.v1;
 
 option go_package = "github.com/zondax/keyringPoc/keyring/types";
+
 import "keyringPoc/keyring/v1/request.proto";
 
 service KeyringService {
