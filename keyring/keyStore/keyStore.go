@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cyptoTypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	pocKeyring "github.com/zondax/keyringPoc/keyring"
 	"github.com/zondax/keyringPoc/keyring/grpc"
@@ -25,6 +26,7 @@ func NewKeyring(path string, cdc codec.Codec) *PluginsKeyStore {
 		Plugins:          grpc.PluginMap,
 		Cmd:              exec.Command("sh", "-c", path),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+		Logger:           hclog.New(&hclog.LoggerOptions{Level: hclog.Off}),
 	})
 	// Connect via RPC
 	rpcClient, err := client.Client()

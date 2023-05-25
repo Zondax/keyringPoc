@@ -19,7 +19,7 @@ type keyring struct {
 	db  map[string][]byte
 }
 
-func NewKeyring() *keyring {
+func newKeyring() *keyring {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
 	return &keyring{
@@ -86,7 +86,7 @@ func main() {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: plugin2.Handshake,
 		Plugins: map[string]plugin.Plugin{
-			"keyring": &plugin2.KeyringGRPC{Impl: NewKeyring()},
+			"keyring": &plugin2.KeyringGRPC{Impl: newKeyring()},
 		},
 		// A non-nil value here enables gRPC serving for this keyStore...
 		GRPCServer: plugin.DefaultGRPCServer,
