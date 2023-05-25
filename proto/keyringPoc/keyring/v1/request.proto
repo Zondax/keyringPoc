@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package keyring.v1;
 
-option go_package = "github.com/zondax/keyringPoc/keyring";
+option go_package = "github.com/zondax/keyringPoc/keyring/types";
 
 import "cosmos/crypto/keyring/v1/record.proto";
 
@@ -21,7 +21,7 @@ message KeyRequest {
 }
 
 message KeyResponse {
-  cosmos.crypto.keyring.v1.Record record = 1;
+  bytes key = 1;
 }
 
 message NewAccountRequest {

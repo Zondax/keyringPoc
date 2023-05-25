@@ -1,40 +1,39 @@
-package server
+package main
 
 import (
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/zondax/keyringPoc/keyring"
+	"github.com/hashicorp/go-plugin"
+	plugin2 "github.com/zondax/keyringPoc/keyring/grpc"
+	keyring2 "github.com/zondax/keyringPoc/keyring/types"
 )
 
-type ApiServer struct {
-	keyring.UnimplementedKeyringServiceServer
+type keyring struct {
 	cdc codec.Codec
 	db  map[string][]byte
 }
 
-func NewApiServer() *ApiServer {
+func newKeyring() *keyring {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
-	return &ApiServer{
+	return &keyring{
 		cdc: codec.NewProtoCodec(registry),
 		db:  make(map[string][]byte),
 	}
 }
 
-func (s ApiServer) Backend(ctx context.Context, r *keyring.BackendRequest) (*keyring.BackendResponse, error) {
-	return &keyring.BackendResponse{Backend: "test"}, nil
+func (k keyring) Backend(r *keyring2.BackendRequest) (*keyring2.BackendResponse, error) {
+	return &keyring2.BackendResponse{Backend: "memoryGo"}, nil
 }
 
-func (s ApiServer) Key(ctx context.Context, r *keyring.KeyRequest) (*keyring.KeyResponse, error) {
-	item, ok := s.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
+func (k keyring) Key(r *keyring2.KeyRequest) (*keyring2.KeyResponse, error) {
+	item, ok := k.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
 	if !ok {
 		return nil, errors.New("key not found")
 	}
@@ -42,19 +41,12 @@ func (s ApiServer) Key(ctx context.Context, r *keyring.KeyRequest) (*keyring.Key
 		return nil, errors.New("error key")
 	}
 
-	k := new(cosmosKeyring.Record)
-	err := s.cdc.Unmarshal(item, k)
-	if err == nil {
-		return &keyring.KeyResponse{
-			Record: k,
-		}, nil
-	}
-
-	return nil, errors.New("COULD NOT DECODE")
+	return &keyring2.KeyResponse{
+		Key: item,
+	}, nil
 }
 
-func (s ApiServer) NewAccount(ctx context.Context, r *keyring.NewAccountRequest) (*keyring.NewAccountResponse, error) {
-
+func (k keyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAccountResponse, error) {
 	derivedPriv, err := hd.Secp256k1.Derive()(r.Mnemonic, r.Bip39Passphrase, r.Hdpath)
 	if err != nil {
 		return nil, err
@@ -80,12 +72,23 @@ func (s ApiServer) NewAccount(ctx context.Context, r *keyring.NewAccountRequest)
 		return nil, err
 	}
 
-	serializedRecord, err := s.cdc.Marshal(record)
+	serializedRecord, err := k.cdc.Marshal(record)
 	if err != nil {
 		return nil, err
 	}
 
-	s.db[fmt.Sprintf("%s.%s", r.Uid, "info")] = serializedRecord
-	s.db[fmt.Sprintf("%s.%s", hex.EncodeToString(addr.Bytes()), "address")] = []byte(fmt.Sprintf("%s.%s", r.Uid, "info"))
-	return &keyring.NewAccountResponse{Record: record}, nil
+	k.db[fmt.Sprintf("%s.%s", r.Uid, "info")] = serializedRecord
+	k.db[fmt.Sprintf("%s.%s", hex.EncodeToString(addr.Bytes()), "address")] = []byte(fmt.Sprintf("%s.%s", r.Uid, "info"))
+	return &keyring2.NewAccountResponse{Record: record}, nil
+}
+
+func main() {
+	plugin.Serve(&plugin.ServeConfig{
+		HandshakeConfig: plugin2.Handshake,
+		Plugins: map[string]plugin.Plugin{
+			"keyring": &plugin2.KeyringGRPC{Impl: newKeyring()},
+		},
+		// A non-nil value here enables gRPC serving for this keyStore...
+		GRPCServer: plugin.DefaultGRPCServer,
+	})
 }
