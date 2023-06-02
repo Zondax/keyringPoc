@@ -7,3 +7,6 @@ plugins:
   - name: grpc-gateway
     out: .
     opt: logtostderr=true,allow_colon_final_segments=true
+  - name: python
+    out: gen
+    opt: grpclib_python_out=.

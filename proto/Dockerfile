@@ -10,7 +10,13 @@ RUN apk add --no-cache \
   nodejs \
   npm \
   git \
-  make
+  make \
+  build-base \
+  python3-dev \
+  py3-pip \
+  protoc
+
+RUN pip install grpcio
 
 ENV GOLANG_PROTOBUF_VERSION=1.28.0 \
   GOGO_PROTOBUF_VERSION=1.3.2 \
