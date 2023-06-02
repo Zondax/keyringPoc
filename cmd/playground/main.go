@@ -38,10 +38,10 @@ func main() {
 	fmt.Println(back)
 
 	// Create a new key
-	mnemonic, _ := newMnemonic()
+	//mnemonic, _ := newMnemonic()
 	r, err := k.NewAccount(
 		"test",
-		mnemonic,
+		"spare august spell toilet open wonder coffee tiger prepare size option talent citizen hungry vote swarm embark citizen hedgehog age giggle foster flat police",
 		"",
 		hd.CreateHDPath(118, 0, 0).String(),
 		nil)
@@ -54,6 +54,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	addr, err := record.GetAddress()
+	fmt.Println(addr.String())
 	fmt.Println(record.GetAddress())
 	msg := []byte("THIS IS A MESSAGE")
 	s, pk, err := k.Sign("test", msg)

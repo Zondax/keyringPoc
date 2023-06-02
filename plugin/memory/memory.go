@@ -17,9 +17,14 @@ import (
 	keyring2 "github.com/zondax/keyringPoc/keyring/types"
 )
 
+const (
+	backendId = "memoryGo"
+	v         = "0.0.1"
+)
+
 type memKeyring struct {
 	cdc codec.Codec
-	db  map[string][]byte
+	db  db
 }
 
 func newMemKeyring() *memKeyring {
@@ -27,23 +32,19 @@ func newMemKeyring() *memKeyring {
 	cryptoCodec.RegisterInterfaces(registry)
 	return &memKeyring{
 		cdc: codec.NewProtoCodec(registry),
-		db:  make(map[string][]byte),
+		db:  newDb(),
 	}
 }
 
 func (k memKeyring) Backend(r *keyring2.BackendRequest) (*keyring2.BackendResponse, error) {
-	return &keyring2.BackendResponse{Backend: "memoryGo"}, nil
+	return &keyring2.BackendResponse{Backend: fmt.Sprintf(`%s - %s`, backendId, v)}, nil
 }
 
 func (k memKeyring) Key(r *keyring2.KeyRequest) (*keyring2.KeyResponse, error) {
-	item, ok := k.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
-	if !ok {
-		return nil, errors.New("key not found")
+	item, err := k.db.get(fmt.Sprintf("%s.%s", r.Uid, "info"))
+	if err != nil {
+		return nil, err
 	}
-	if len(item) == 0 {
-		return nil, errors.New("error key")
-	}
-
 	return &keyring2.KeyResponse{
 		Key: item,
 	}, nil
@@ -80,8 +81,8 @@ func (k memKeyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAcco
 		return nil, err
 	}
 
-	k.db[fmt.Sprintf("%s.%s", r.Uid, "info")] = serializedRecord
-	k.db[fmt.Sprintf("%s.%s", hex.EncodeToString(addr.Bytes()), "address")] = []byte(fmt.Sprintf("%s.%s", r.Uid, "info"))
+	k.db.save(fmt.Sprintf("%s.%s", r.Uid, "info"), serializedRecord)
+	k.db.save(fmt.Sprintf("%s.%s", hex.EncodeToString(addr.Bytes()), "address"), []byte(fmt.Sprintf("%s.%s", r.Uid, "info")))
 	return &keyring2.NewAccountResponse{Record: record}, nil
 }
 
@@ -99,16 +100,13 @@ func extractPrivKeyFromLocal(rl *cosmosKeyring.Record_Local) (cryptotypes.PrivKe
 }
 
 func (k memKeyring) Sign(r *keyring2.NewSignRequest) (*keyring2.NewSignResponse, error) {
-	item, ok := k.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
-	if !ok {
-		return nil, errors.New("key not found")
-	}
-	if len(item) == 0 {
-		return nil, errors.New("error key")
+	item, err := k.db.get(fmt.Sprintf("%s.%s", r.Uid, "info"))
+	if err != nil {
+		return nil, err
 	}
 
 	record := new(cosmosKeyring.Record)
-	err := k.cdc.Unmarshal(item, record)
+	err = k.cdc.Unmarshal(item, record)
 	if err != nil {
 		return nil, err
 	}

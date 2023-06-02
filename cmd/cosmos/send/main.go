@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,81 +22,56 @@ import (
 )
 
 const (
-	hdPath = "m/44'/118'/0'/0/0"
+	hdPath      = "m/44'/118'/0'/0/0"
+	toAddress   = "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp"
+	rpcEndpoint = "https://cosmos-rpc.polkachu.com:443"
+	pluginPath  = "./build/memoryGo"
+	keyName     = "test"
 )
 
-func main() {
-	c, err := LoadConfig()
+func checkCosmosKeyring(mnemonic string, cdc *codec.ProtoCodec) {
+	kr := keyring.NewInMemory(cdc)
+	key, err := kr.NewAccount(keyName, mnemonic, "", hdPath, hd.Secp256k1)
 	if err != nil {
 		panic(err)
 	}
-
-	cli, err := client.NewClientFromNode("https://cosmos-rpc.polkachu.com:443")
+	add, err := key.GetAddress()
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(add.String())
+}
 
+func getCodec() (*codec.ProtoCodec, codectypes.InterfaceRegistry) {
 	ir := codectypes.NewInterfaceRegistry()
 	authcodec.RegisterInterfaces(ir)
 	bankcodec.RegisterInterfaces(ir)
 	cryptoCodec.RegisterInterfaces(ir)
 
 	cdc := codec.NewProtoCodec(ir)
+	return cdc, ir
+}
 
-	ctx := client.Context{}.
+func ctx(endpoint string, cdc *codec.ProtoCodec, ir codectypes.InterfaceRegistry) client.Context {
+	cli, err := client.NewClientFromNode(endpoint)
+	if err != nil {
+		panic(err)
+	}
+	return client.Context{}.
 		WithCodec(cdc).
 		WithInterfaceRegistry(ir).
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithTxConfig(tx.NewTxConfig(cdc, tx.DefaultSignModes)).
-		WithViper(""). // In simapp, we don't use any prefix for env variables.
+		WithViper(""). // TODO understand
 		WithClient(cli).
 		WithChainID("cosmoshub-4").
-		WithFromName("test").
+		WithFromName(keyName).
 		WithBroadcastMode("sync")
-	fmt.Println(ctx)
+}
 
-	//kr := keyring.NewInMemory(cdc)
-	//key, err := kr.NewAccount("test", mnemonic, "", hdPath, hd.Secp256k1)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//add, err := key.GetAddress()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(add.String())
-
-	ks := keyStore.NewKeyring("./build/memoryGo", cdc)
-	defer ks.Close()
-
-	_, err = ks.NewAccount("test", c.Mnemonic, "", hdPath, hd.Secp256k1)
-	if err != nil {
-		panic(err)
-	}
-	key, err := ks.Key("test")
-	add, err := key.GetAddress()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(add.String())
-
-	//amount := "10000uatom"
-	coins, err := sdk.ParseCoinsNormalized("10000uatom")
-	if err != nil {
-		panic(err)
-	}
-	msg := &bankcodec.MsgSend{
-		FromAddress: add.String(),
-		ToAddress:   "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp",
-		Amount:      coins,
-	}
-
-	if err := msg.ValidateBasic(); err != nil {
-		panic(err)
-	}
-
-	txf := txClient.Factory{}.WithGas(350000).
+func txFactory(ctx client.Context, ks keyring.Keyring) txClient.Factory {
+	return txClient.Factory{}.WithGas(350000).
 		WithSimulateAndExecute(false).
 		WithGasAdjustment(1).
 		WithMemo("").
@@ -106,9 +82,47 @@ func main() {
 		WithChainID("cosmoshub-4").
 		WithFees("2500uatom").
 		WithKeybase(ks)
-	//WithAccountNumber(1685823).
-	//WithSequence(4).
+}
 
+func main() {
+	c, err := LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	cdc, ir := getCodec()
+	ctx := ctx(rpcEndpoint, cdc, ir)
+
+	ks := keyStore.NewKeyring(pluginPath, cdc)
+	defer ks.Close()
+	fmt.Printf("Using keyring with plugin: %s\n\n", ks.Backend())
+
+	_, err = ks.NewAccount(keyName, c.Mnemonic, "", hdPath, hd.Secp256k1)
+	if err != nil {
+		panic(err)
+	}
+	key, err := ks.Key(keyName)
+	add, err := key.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Address:\n\t%s\n", add.String())
+
+	coins, err := sdk.ParseCoinsNormalized("10000uatom")
+	if err != nil {
+		panic(err)
+	}
+	msg := &bankcodec.MsgSend{
+		FromAddress: add.String(),
+		ToAddress:   toAddress,
+		Amount:      coins,
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		panic(err)
+	}
+	fmt.Printf("About to send:\n\t%v\n\n", msg)
+
+	txf := txFactory(ctx, ks)
 	if err != nil {
 		panic(err)
 	}
