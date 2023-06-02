@@ -2,15 +2,31 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/go-bip39"
+
 	"github.com/zondax/keyringPoc/keyring/keyStore"
 )
 
+func newMnemonic() (string, error) {
+	entropySeed, err := bip39.NewEntropy(256)
+	if err != nil {
+		return "", err
+	}
+
+	mnemonic, err := bip39.NewMnemonic(entropySeed)
+	if err != nil {
+		return "", err
+	}
+	return mnemonic, nil
+}
+
 func main() {
+
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
 
@@ -39,17 +55,11 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(record.GetAddress())
-}
-
-func newMnemonic() (string, error) {
-	entropySeed, err := bip39.NewEntropy(256)
+	msg := []byte("THIS IS A MESSAGE")
+	s, pk, err := k.Sign("test", msg)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-
-	mnemonic, err := bip39.NewMnemonic(entropySeed)
-	if err != nil {
-		return "", err
-	}
-	return mnemonic, nil
+	fmt.Println(string(s))
+	fmt.Println(pk)
 }

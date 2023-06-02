@@ -2,10 +2,12 @@ package grpc
 
 import (
 	"context"
+
 	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc"
+
 	"github.com/zondax/keyringPoc/keyring"
 	"github.com/zondax/keyringPoc/keyring/types"
-	"google.golang.org/grpc"
 )
 
 // Handshake is a common handshake that is shared by keyStore and host.

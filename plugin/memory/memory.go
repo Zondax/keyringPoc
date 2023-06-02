@@ -4,35 +4,38 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/hashicorp/go-plugin"
+
 	plugin2 "github.com/zondax/keyringPoc/keyring/grpc"
 	keyring2 "github.com/zondax/keyringPoc/keyring/types"
 )
 
-type keyring struct {
+type memKeyring struct {
 	cdc codec.Codec
 	db  map[string][]byte
 }
 
-func newKeyring() *keyring {
+func newMemKeyring() *memKeyring {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
-	return &keyring{
+	return &memKeyring{
 		cdc: codec.NewProtoCodec(registry),
 		db:  make(map[string][]byte),
 	}
 }
 
-func (k keyring) Backend(r *keyring2.BackendRequest) (*keyring2.BackendResponse, error) {
+func (k memKeyring) Backend(r *keyring2.BackendRequest) (*keyring2.BackendResponse, error) {
 	return &keyring2.BackendResponse{Backend: "memoryGo"}, nil
 }
 
-func (k keyring) Key(r *keyring2.KeyRequest) (*keyring2.KeyResponse, error) {
+func (k memKeyring) Key(r *keyring2.KeyRequest) (*keyring2.KeyResponse, error) {
 	item, ok := k.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
 	if !ok {
 		return nil, errors.New("key not found")
@@ -46,7 +49,7 @@ func (k keyring) Key(r *keyring2.KeyRequest) (*keyring2.KeyResponse, error) {
 	}, nil
 }
 
-func (k keyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAccountResponse, error) {
+func (k memKeyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAccountResponse, error) {
 	derivedPriv, err := hd.Secp256k1.Derive()(r.Mnemonic, r.Bip39Passphrase, r.Hdpath)
 	if err != nil {
 		return nil, err
@@ -82,11 +85,69 @@ func (k keyring) NewAccount(r *keyring2.NewAccountRequest) (*keyring2.NewAccount
 	return &keyring2.NewAccountResponse{Record: record}, nil
 }
 
+func extractPrivKeyFromLocal(rl *cosmosKeyring.Record_Local) (cryptotypes.PrivKey, error) {
+	if rl.PrivKey == nil {
+		return nil, errors.New("no priv key")
+	}
+
+	priv, ok := rl.PrivKey.GetCachedValue().(cryptotypes.PrivKey)
+	if !ok {
+		return nil, errors.New("no cached value")
+	}
+
+	return priv, nil
+}
+
+func (k memKeyring) Sign(r *keyring2.NewSignRequest) (*keyring2.NewSignResponse, error) {
+	item, ok := k.db[fmt.Sprintf("%s.%s", r.Uid, "info")]
+	if !ok {
+		return nil, errors.New("key not found")
+	}
+	if len(item) == 0 {
+		return nil, errors.New("error key")
+	}
+
+	record := new(cosmosKeyring.Record)
+	err := k.cdc.Unmarshal(item, record)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case record.GetLocal() != nil:
+		priv, err := extractPrivKeyFromLocal(record.GetLocal())
+		if err != nil {
+			return nil, err
+		}
+
+		sig, err := priv.Sign(r.GetMsg())
+		if err != nil {
+			return nil, err
+		}
+
+		privKey, err := codectypes.NewAnyWithValue(priv.PubKey())
+		if err != nil {
+			return nil, errors.New("sdfd")
+		}
+		return &keyring2.NewSignResponse{
+			Msg:    sig,
+			PubKey: privKey,
+		}, nil
+
+	default:
+		_, err := record.GetPubKey()
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New("cannot sign with offline keys")
+	}
+
+}
+
 func main() {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: plugin2.Handshake,
 		Plugins: map[string]plugin.Plugin{
-			"keyring": &plugin2.KeyringGRPC{Impl: newKeyring()},
+			"keyring": &plugin2.KeyringGRPC{Impl: newMemKeyring()},
 		},
 		// A non-nil value here enables gRPC serving for this keyStore...
 		GRPCServer: plugin.DefaultGRPCServer,

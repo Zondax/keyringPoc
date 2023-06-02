@@ -2,16 +2,19 @@ package keyStore
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cyptoTypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+
 	pocKeyring "github.com/zondax/keyringPoc/keyring"
 	"github.com/zondax/keyringPoc/keyring/grpc"
 	"github.com/zondax/keyringPoc/keyring/types"
-	"os"
-	"os/exec"
 )
 
 type PluginsKeyStore struct {
@@ -83,7 +86,7 @@ func (k PluginsKeyStore) Key(uid string) (*keyring.Record, error) {
 	return record, nil
 }
 
-func (k PluginsKeyStore) KeyByAddress(address cyptoTypes.Address) (*keyring.Record, error) {
+func (k PluginsKeyStore) KeyByAddress(address sdk.Address) (*keyring.Record, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -93,7 +96,7 @@ func (k PluginsKeyStore) Delete(uid string) error {
 	panic("implement me")
 }
 
-func (k PluginsKeyStore) DeleteByAddress(address cyptoTypes.Address) error {
+func (k PluginsKeyStore) DeleteByAddress(address sdk.Address) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -136,11 +139,18 @@ func (k PluginsKeyStore) SaveMultisig(uid string, pubkey cyptoTypes.PubKey) (*ke
 }
 
 func (k PluginsKeyStore) Sign(uid string, msg []byte) ([]byte, cyptoTypes.PubKey, error) {
-	//TODO implement me
-	panic("implement me")
+	r, err := k.backEnd.Sign(&types.NewSignRequest{
+		Uid:      uid,
+		Msg:      msg,
+		SignMode: 0,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return r.GetMsg(), nil, nil
 }
 
-func (k PluginsKeyStore) SignByAddress(address cyptoTypes.Address, msg []byte) ([]byte, cyptoTypes.PubKey, error) {
+func (k PluginsKeyStore) SignByAddress(address sdk.Address, msg []byte) ([]byte, cyptoTypes.PubKey, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -160,7 +170,7 @@ func (k PluginsKeyStore) ExportPubKeyArmor(uid string) (string, error) {
 	panic("implement me")
 }
 
-func (k PluginsKeyStore) ExportPubKeyArmorByAddress(address cyptoTypes.Address) (string, error) {
+func (k PluginsKeyStore) ExportPubKeyArmorByAddress(address sdk.Address) (string, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -170,7 +180,7 @@ func (k PluginsKeyStore) ExportPrivKeyArmor(uid, encryptPassphrase string) (armo
 	panic("implement me")
 }
 
-func (k PluginsKeyStore) ExportPrivKeyArmorByAddress(address cyptoTypes.Address, encryptPassphrase string) (armor string, err error) {
+func (k PluginsKeyStore) ExportPrivKeyArmorByAddress(address sdk.Address, encryptPassphrase string) (armor string, err error) {
 	//TODO implement me
 	panic("implement me")
 }
