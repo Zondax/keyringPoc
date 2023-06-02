@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+
 	"github.com/zondax/keyringPoc/keyring/types"
 )
 
@@ -17,4 +18,8 @@ func (c *Client) Key(r *types.KeyRequest) (*types.KeyResponse, error) {
 
 func (c *Client) NewAccount(r *types.NewAccountRequest) (*types.NewAccountResponse, error) {
 	return c.Client.NewAccount(context.Background(), r)
+}
+
+func (c *Client) Sign(r *types.NewSignRequest) (*types.NewSignResponse, error) {
+	return c.Client.Sign(context.Background(), r)
 }

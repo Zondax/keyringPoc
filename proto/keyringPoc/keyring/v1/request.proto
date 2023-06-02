@@ -4,7 +4,9 @@ package keyring.v1;
 
 option go_package = "github.com/zondax/keyringPoc/keyring/types";
 
+import "google/protobuf/any.proto";
 import "cosmos/crypto/keyring/v1/record.proto";
+import "cosmos/tx/signing/v1beta1/signing.proto";
 
 message Empty {}
 
@@ -33,4 +35,16 @@ message NewAccountRequest {
 
 message NewAccountResponse {
   cosmos.crypto.keyring.v1.Record record = 1;
+}
+
+message NewSignRequest {
+  string uid = 1;
+  bytes msg = 2;
+  cosmos.tx.signing.v1beta1.SignMode signMode = 3;
+}
+
+message NewSignResponse {
+  bytes msg = 1;
+  google.protobuf.Any pubKey = 2;
+
 }
