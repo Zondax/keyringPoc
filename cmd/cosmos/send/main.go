@@ -94,7 +94,7 @@ func main() {
 	cdc, ir := getCodec()
 	ctx := ctx(rpcEndpoint, cdc, ir)
 
-	ks := keyStore.NewKeyring(pythonPlugin, cdc)
+	ks := keyStore.NewKeyring(goPlugin, cdc)
 	defer ks.Close()
 	fmt.Printf("Using keyring with plugin: %s\n\n", ks.Backend())
 

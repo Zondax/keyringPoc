@@ -30,7 +30,7 @@ func main() {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
 
-	k := keyStore.NewKeyring("./build/memoryGo", codec.NewProtoCodec(registry))
+	k := keyStore.NewKeyring("./build/goMem", codec.NewProtoCodec(registry))
 	defer k.Close()
 
 	// Get the backend of the keyStore
