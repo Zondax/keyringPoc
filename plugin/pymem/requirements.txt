@@ -1,0 +1,6 @@
+betterproto==2.0.0b5
+mnemonic
+bech32
+hdwallets
+hashlib
+ecdsa

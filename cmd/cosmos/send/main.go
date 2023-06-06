@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	hdPath      = "m/44'/118'/0'/0/0"
-	toAddress   = "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp"
-	rpcEndpoint = "https://cosmos-rpc.polkachu.com:443"
-	pluginPath  = "./build/memoryGo"
-	keyName     = "test"
+	hdPath       = "m/44'/118'/0'/0/0"
+	toAddress    = "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp"
+	rpcEndpoint  = "https://cosmos-rpc.polkachu.com:443"
+	goPlugin     = "./build/goMem"
+	pythonPlugin = "python3 plugin/pymem/memDb.py"
+	keyName      = "test"
 )
 
 func checkCosmosKeyring(mnemonic string, cdc *codec.ProtoCodec) {
@@ -93,7 +94,7 @@ func main() {
 	cdc, ir := getCodec()
 	ctx := ctx(rpcEndpoint, cdc, ir)
 
-	ks := keyStore.NewKeyring(pluginPath, cdc)
+	ks := keyStore.NewKeyring(pythonPlugin, cdc)
 	defer ks.Close()
 	fmt.Printf("Using keyring with plugin: %s\n\n", ks.Backend())
 

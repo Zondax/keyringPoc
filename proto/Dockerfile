@@ -11,12 +11,10 @@ RUN apk add --no-cache \
   npm \
   git \
   make \
-  build-base \
   python3-dev \
-  py3-pip \
-  protoc
+  py3-pip
 
-RUN pip install grpcio
+RUN pip install "betterproto[compiler]"==2.0.0b5
 
 ENV GOLANG_PROTOBUF_VERSION=1.28.0 \
   GOGO_PROTOBUF_VERSION=1.3.2 \
