@@ -13,4 +13,4 @@ proto-image-build:
 
 
 plugin-go-memory:
-		go build -o build/memoryGo plugin/memory/*
+		go build -o build/goMem plugin/goMem/*

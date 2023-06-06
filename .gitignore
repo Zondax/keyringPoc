@@ -70,3 +70,7 @@ fabric.properties
 build/
 
 config.json
+
+### Python ###
+.venv/
+__pycache__/
