@@ -67,6 +67,10 @@ A CLI app is available to facilitate the use of this keyring. To build the app, 
 
 This will create a binary named `app` under build directory, which you can use.
 
+To check if everything is working smoothly:
+ * `./build/app backend --plugin goFile`
+ * `./build/app backend --plugin pyFile`
+
 For more information on using the app, run `./build/app --help`
 
 ## Issues
@@ -88,6 +92,28 @@ type Any struct {
 	compat *anyCompat
 }
 ```
-This struct relies on its cachedValue field to retrieve the address and public key. When returning a Record over gRPC,
-this `cachedValue` is nil since it's not an exported attribute. Therefore, the deserialization of the record must be
-performed within the SDK and cannot be accomplished within the plugins.
+This struct relies on its cachedValue field to retrieve the address and public key in the case of a Record.
+When returning a Record over gRPC, the cachedValue is nil since it's not an exported attribute. Therefore, the
+deserialization of the record must be performed within the SDK and cannot be accomplished within the plugins.
+
+### SignatureAlgo as parameters
+In the current implementation of the cosmos-sdk keyring, the following methods require a SignatureAlgo as a parameter:
+```go
+    NewMnemonic(uid string, language Language, hdPath, bip39Passphrase string, algo SignatureAlgo) (*Record, string, error)
+    NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo SignatureAlgo) (*Record, error)
+    SaveLedgerKey(uid string, algo SignatureAlgo, hrp string, coinType, account, index uint32) (*Record, error)
+
+```
+The SignatureAlgo interface is defined as follows:
+```go
+// SignatureAlgo defines the interface for a keyring supported algorithm.
+type SignatureAlgo interface {
+	Name() hd.PubKeyType
+	Derive() hd.DeriveFn
+	Generate() hd.GenerateFn
+}
+```
+However, since the SignatureAlgo information cannot be sent over gRPC, and the plugins are currently hardcoded to use
+secp256k1, a potential solution would be to include the Name() of the algorithm as part of the request. In this
+scenario, it would be reasonable to refactor the SDK to pass the algorithm as a string in those methods. Then, a lookup
+can be performed on a map to obtain the corresponding SignatureAlgo based on the provided string.
