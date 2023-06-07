@@ -23,6 +23,7 @@ func Get(uid, plugin string) {
 	if err != nil {
 		panic(err)
 	}
+	defer k.Close()
 	key, err := k.Key(uid)
 	if err != nil {
 		panic(err)

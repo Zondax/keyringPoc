@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -18,13 +15,8 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "app",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "poc of plugins keyring",
+	Long:  `Proof of concept for a keyring that uses hashicorp plugins over grpc.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -40,18 +32,8 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.app.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	//var plugin string
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.PersistentFlags().StringVarP(&plugin, "plugin", "p", "goFile", "")
-	rootCmd.PersistentFlags().StringVar(&uid, "uid", "", "")
+	rootCmd.PersistentFlags().StringVarP(&plugin, "plugin", "p", "goFile", "Provide a plugin name. Currently available plugins [goFile, pyFile]")
+	rootCmd.PersistentFlags().StringVar(&uid, "uid", "", "uid to store the key by")
 	rootCmd.MarkPersistentFlagRequired("uid")
-	rootCmd.PersistentFlags().StringVar(&node, "node", "localhost:26657", "")
+	rootCmd.PersistentFlags().StringVar(&node, "node", "localhost:26657", "node to connect to. Must have the format url:port")
 }

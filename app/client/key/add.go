@@ -20,13 +20,15 @@ func Add(uid, plugin, mnemonic string) {
 	if err != nil {
 		panic(err)
 	}
+	defer k.Close()
+
 	if mnemonic == "" {
 		mnemonic, err = client.NewMnemonic()
 		if err != nil {
 			panic(err)
 		}
 	}
-	mnemonic = "spare august spell toilet open wonder coffee tiger prepare size option talent citizen hungry vote swarm embark citizen hedgehog age giggle foster flat police"
+
 	r, err := k.NewAccount(uid, mnemonic, "", "m/44'/118'/0'/0/0", hd.Secp256k1)
 	if err != nil {
 		panic(err)

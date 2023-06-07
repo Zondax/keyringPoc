@@ -10,6 +10,7 @@ func Sign(uid, plugin, msg string) {
 	if err != nil {
 		panic(err)
 	}
+	defer k.Close()
 	s, _, err := k.Sign(uid, []byte(msg))
 	if err != nil {
 		panic(err)

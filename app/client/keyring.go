@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankcodec "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/zondax/keyringPoc/keyring/keyStore"
@@ -26,11 +25,8 @@ func GetCodec() (*codec.ProtoCodec, codectypes.InterfaceRegistry) {
 	return cdc, ir
 }
 
-func GetKeyring(plugin string) (keyring.Keyring, error) {
+func GetKeyring(plugin string) (*keyStore.PluginsKeyStore, error) {
 	cdc, _ := GetCodec()
-	if plugin == "" {
-		return keyring.NewInMemory(cdc), nil
-	}
 	p, ok := availablePlugins[plugin]
 	if !ok {
 		return nil, errors.New("not available plugin")

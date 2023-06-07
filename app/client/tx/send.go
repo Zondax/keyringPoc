@@ -65,6 +65,7 @@ func Send(uid, plugin, toAddress, amount, node string) {
 	if err != nil {
 		panic(err)
 	}
+	defer k.Close()
 
 	key, err := k.Key(uid)
 	if err != nil {
@@ -86,6 +87,7 @@ func Send(uid, plugin, toAddress, amount, node string) {
 	if err := msg.ValidateBasic(); err != nil {
 		panic(err)
 	}
+
 	cdc, ir := getCodec()
 	ctx := ctx(uid, node, cdc, ir)
 	txf := txFactory(ctx, k)
