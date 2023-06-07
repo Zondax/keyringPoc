@@ -11,13 +11,14 @@ var keyCmd = &cobra.Command{
 	Use:   "key",
 	Short: "key functionalities",
 	Long: `different key functionalities as:
-		add
-		get
-		sign`,
+add
+get
+sign`,
 	Run: func(cmd *cobra.Command, args []string) {},
 }
 
 func init() {
 	rootCmd.AddCommand(keyCmd)
-	keyCmd.PersistentFlags().StringVar(&mnemonic, "mnemonic", "", "")
+	keyCmd.PersistentFlags().StringVarP(&uid, "uid", "u", "", "uid to store the key by")
+	keyCmd.MarkPersistentFlagRequired("uid")
 }
