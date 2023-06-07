@@ -20,4 +20,5 @@ var addCmd = &cobra.Command{
 
 func init() {
 	keyCmd.AddCommand(addCmd)
+	addCmd.Flags().StringP("mnemonic", "m", "", "mnemonic of a key you'd like to import")
 }

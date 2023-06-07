@@ -23,8 +23,8 @@ var sendCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(sendCmd)
-	sendCmd.Flags().String("to", "", "address to send")
+	sendCmd.Flags().StringP("to", "t", "", "address to send")
 	sendCmd.MarkFlagRequired("to")
-	sendCmd.Flags().String("amount", "", "amount to send")
+	sendCmd.Flags().StringP("amount", "a", "", "amount to send")
 	sendCmd.MarkFlagRequired("amount")
 }
