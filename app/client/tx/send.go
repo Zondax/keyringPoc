@@ -1,8 +1,9 @@
-package main
+package tx
 
 import (
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	client2 "github.com/zondax/keyringPoc/app/client"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -10,38 +11,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankcodec "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	"github.com/zondax/keyringPoc/keyring/keyStore"
 )
-
-const (
-	hdPath       = "m/44'/118'/0'/0/0"
-	toAddress    = "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp"
-	rpcEndpoint  = "https://cosmos-rpc.polkachu.com:443"
-	goPlugin     = "./build/goFile"
-	pythonPlugin = "python3 plugin/pyFile/pyFile.py"
-	keyName      = "test"
-)
-
-func checkCosmosKeyring(mnemonic string, cdc *codec.ProtoCodec) {
-	kr := keyring.NewInMemory(cdc)
-	key, err := kr.NewAccount(keyName, mnemonic, "", hdPath, hd.Secp256k1)
-	if err != nil {
-		panic(err)
-	}
-	add, err := key.GetAddress()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(add.String())
-}
 
 func getCodec() (*codec.ProtoCodec, codectypes.InterfaceRegistry) {
 	ir := codectypes.NewInterfaceRegistry()
@@ -53,7 +28,7 @@ func getCodec() (*codec.ProtoCodec, codectypes.InterfaceRegistry) {
 	return cdc, ir
 }
 
-func ctx(endpoint string, cdc *codec.ProtoCodec, ir codectypes.InterfaceRegistry) client.Context {
+func ctx(keyName, endpoint string, cdc *codec.ProtoCodec, ir codectypes.InterfaceRegistry) client.Context {
 	cli, err := client.NewClientFromNode(endpoint)
 	if err != nil {
 		panic(err)
@@ -85,31 +60,22 @@ func txFactory(ctx client.Context, ks keyring.Keyring) txClient.Factory {
 		WithKeybase(ks)
 }
 
-func main() {
-	c, err := LoadConfig()
+func Send(uid, plugin, toAddress, amount, node string) {
+	k, err := client2.GetKeyring(plugin)
 	if err != nil {
 		panic(err)
 	}
+	defer k.Close()
 
-	cdc, ir := getCodec()
-	ctx := ctx(rpcEndpoint, cdc, ir)
-
-	ks := keyStore.NewKeyring(pythonPlugin, cdc)
-	defer ks.Close()
-	fmt.Printf("Using keyring with plugin: %s\n\n", ks.Backend())
-
-	_, err = ks.NewAccount(keyName, c.Mnemonic, "", hdPath, hd.Secp256k1)
+	key, err := k.Key(uid)
 	if err != nil {
 		panic(err)
 	}
-	key, err := ks.Key(keyName)
 	add, err := key.GetAddress()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Address:\n\t%s\n", add.String())
-
-	coins, err := sdk.ParseCoinsNormalized("10000uatom")
+	coins, err := sdk.ParseCoinsNormalized(amount)
 	if err != nil {
 		panic(err)
 	}
@@ -121,9 +87,10 @@ func main() {
 	if err := msg.ValidateBasic(); err != nil {
 		panic(err)
 	}
-	fmt.Printf("About to send:\n\t%v\n\n", msg)
 
-	txf := txFactory(ctx, ks)
+	cdc, ir := getCodec()
+	ctx := ctx(uid, node, cdc, ir)
+	txf := txFactory(ctx, k)
 	if err != nil {
 		panic(err)
 	}

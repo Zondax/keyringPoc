@@ -12,5 +12,14 @@ proto-image-build:
 	@DOCKER_BUILDKIT=1 docker build -t $(protoImageName) -f ./proto/Dockerfile ./proto
 
 
-plugin-go-file:
-		go build -o build/goFile plugin/goFile/file.go
+build-go-plugin-file:
+	go build -o build/goFile plugin/goFile/file.go
+
+build-app:
+	go build -o build/app app/main.go
+
+python-setup:
+	sh ./scripts/pythonSetUp.sh
+
+python-clean:
+	rm -r .venv
