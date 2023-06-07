@@ -12,5 +12,5 @@ proto-image-build:
 	@DOCKER_BUILDKIT=1 docker build -t $(protoImageName) -f ./proto/Dockerfile ./proto
 
 
-plugin-go-memory:
-		go build -o build/goMem plugin/goMem/*.go
+plugin-go-file:
+		go build -o build/goFile plugin/goFile/file.go
