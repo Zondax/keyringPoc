@@ -27,4 +27,6 @@ func init() {
 	sendCmd.MarkFlagRequired("to")
 	sendCmd.Flags().StringP("amount", "a", "", "amount to send")
 	sendCmd.MarkFlagRequired("amount")
+	sendCmd.PersistentFlags().StringVarP(&uid, "uid", "u", "", "uid to store the key by")
+	sendCmd.MarkPersistentFlagRequired("uid")
 }

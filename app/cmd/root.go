@@ -33,7 +33,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&plugin, "plugin", "p", "goFile", "Provide a plugin name. Currently available plugins [goFile, pyFile]")
-	rootCmd.PersistentFlags().StringVarP(&uid, "uid", "u", "", "uid to store the key by")
-	rootCmd.MarkPersistentFlagRequired("uid")
 	rootCmd.PersistentFlags().StringVarP(&node, "node", "n", "localhost:26657", "node to connect to. Must have the format url:port")
 }

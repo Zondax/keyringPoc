@@ -19,4 +19,6 @@ sign`,
 
 func init() {
 	rootCmd.AddCommand(keyCmd)
+	keyCmd.PersistentFlags().StringVarP(&uid, "uid", "u", "", "uid to store the key by")
+	keyCmd.MarkPersistentFlagRequired("uid")
 }
