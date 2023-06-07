@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 	keyring2 "github.com/zondax/keyringPoc/keyring/types"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -58,7 +59,6 @@ func Test_extractPrivKeyFromLocal(t *testing.T) {
 func Test_memKeyring_Backend(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
-		db  db
 	}
 	type args struct {
 		r *keyring2.BackendRequest
@@ -74,7 +74,6 @@ func Test_memKeyring_Backend(t *testing.T) {
 			name: "backend response",
 			fields: fields{
 				cdc: getCodec(),
-				db:  make(db),
 			},
 			args:    args{r: &keyring2.BackendRequest{}},
 			want:    &keyring2.BackendResponse{Backend: backendId},
@@ -83,9 +82,8 @@ func Test_memKeyring_Backend(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := memKeyring{
+			k := fileKeyring{
 				cdc: tt.fields.cdc,
-				db:  tt.fields.db,
 			}
 			got, err := k.Backend(tt.args.r)
 			if (err != nil) != tt.wantErr {
@@ -119,7 +117,6 @@ func Test_memKeyring_Key(t *testing.T) {
 			name: "get key",
 			fields: fields{
 				cdc: getCodec(),
-				db:  make(db),
 			},
 			args:      args{r: &keyring2.KeyRequest{Uid: "test"}},
 			createKey: "test",
@@ -129,9 +126,8 @@ func Test_memKeyring_Key(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := memKeyring{
+			k := fileKeyring{
 				cdc: tt.fields.cdc,
-				db:  make(db),
 			}
 			if tt.createKey != "" {
 				_, err := k.NewAccount(&keyring2.NewAccountRequest{
@@ -154,7 +150,6 @@ func Test_memKeyring_Key(t *testing.T) {
 func Test_memKeyring_NewAccount(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
-		db  db
 	}
 	type args struct {
 		r *keyring2.NewAccountRequest
@@ -170,7 +165,6 @@ func Test_memKeyring_NewAccount(t *testing.T) {
 			name: "create key",
 			fields: fields{
 				cdc: getCodec(),
-				db:  make(db),
 			},
 			args: args{r: &keyring2.NewAccountRequest{
 				Uid:             "testNewAccount",
@@ -184,10 +178,7 @@ func Test_memKeyring_NewAccount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := memKeyring{
-				cdc: tt.fields.cdc,
-				db:  tt.fields.db,
-			}
+			k := newFileKeyring()
 			got, err := k.NewAccount(tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewAccount() error = %v, wantErr %v", err, tt.wantErr)
@@ -205,7 +196,6 @@ func Test_memKeyring_NewAccount(t *testing.T) {
 func Test_memKeyring_Sign(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
-		db  db
 	}
 	type args struct {
 		r *keyring2.NewSignRequest
@@ -221,10 +211,7 @@ func Test_memKeyring_Sign(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := memKeyring{
-				cdc: tt.fields.cdc,
-				db:  tt.fields.db,
-			}
+			k := newFileKeyring()
 			got, err := k.Sign(tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Sign() error = %v, wantErr %v", err, tt.wantErr)
@@ -240,19 +227,19 @@ func Test_memKeyring_Sign(t *testing.T) {
 func Test_newMemKeyring(t *testing.T) {
 	tests := []struct {
 		name string
-		want *memKeyring
+		want *fileKeyring
 	}{
 		{
 			name: "create memory keyring",
-			want: &memKeyring{
+			want: &fileKeyring{
 				cdc: getCodec(),
-				db:  make(db),
+				dir: os.TempDir() + "goPluginKeyring",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newMemKeyring(); !reflect.DeepEqual(got, tt.want) {
+			if got := newFileKeyring(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newMemKeyring() = %v, want %v", got, tt.want)
 			}
 		})

@@ -25,8 +25,8 @@ const (
 	hdPath       = "m/44'/118'/0'/0/0"
 	toAddress    = "cosmos1hw0lawgqtm0segnt34yuh63glujwv9kr6r0evp"
 	rpcEndpoint  = "https://cosmos-rpc.polkachu.com:443"
-	goPlugin     = "./build/goMem"
-	pythonPlugin = "python3 plugin/pymem/memDb.py"
+	goPlugin     = "./build/goFile"
+	pythonPlugin = "python3 plugin/pyFile/pyFile.py"
 	keyName      = "test"
 )
 
@@ -94,7 +94,7 @@ func main() {
 	cdc, ir := getCodec()
 	ctx := ctx(rpcEndpoint, cdc, ir)
 
-	ks := keyStore.NewKeyring(goPlugin, cdc)
+	ks := keyStore.NewKeyring(pythonPlugin, cdc)
 	defer ks.Close()
 	fmt.Printf("Using keyring with plugin: %s\n\n", ks.Backend())
 

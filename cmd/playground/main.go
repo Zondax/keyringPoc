@@ -30,7 +30,7 @@ func main() {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptoCodec.RegisterInterfaces(registry)
 
-	k := keyStore.NewKeyring("./build/goMem", codec.NewProtoCodec(registry))
+	k := keyStore.NewKeyring("./build/goFile", codec.NewProtoCodec(registry))
 	defer k.Close()
 
 	// Get the backend of the keyStore
@@ -57,11 +57,11 @@ func main() {
 	addr, err := record.GetAddress()
 	fmt.Println(addr.String())
 	fmt.Println(record.GetAddress())
-	msg := []byte("THIS IS A MESSAGE")
-	s, pk, err := k.Sign("test", msg)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(s))
-	fmt.Println(pk)
+	//msg := []byte("THIS IS A MESSAGE")
+	//s, pk, err := k.Sign("test", msg)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(string(s))
+	//fmt.Println(pk)
 }
