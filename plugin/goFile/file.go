@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	backendId = "memoryGo"
+	backendId = "goFile"
 )
 
 type fileKeyring struct {

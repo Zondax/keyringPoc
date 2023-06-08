@@ -107,17 +107,13 @@ func Test_memKeyring_Key(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		fields    fields
 		args      args
 		createKey string
 		got       *cosmosKeyring.Record
 		wantErr   bool
 	}{
 		{
-			name: "get key",
-			fields: fields{
-				cdc: getCodec(),
-			},
+			name:      "get key",
 			args:      args{r: &keyring2.KeyRequest{Uid: "test"}},
 			createKey: "test",
 			got:       nil,
@@ -126,9 +122,7 @@ func Test_memKeyring_Key(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := fileKeyring{
-				cdc: tt.fields.cdc,
-			}
+			k := newFileKeyring()
 			if tt.createKey != "" {
 				_, err := k.NewAccount(&keyring2.NewAccountRequest{
 					Uid:             tt.args.r.Uid,
