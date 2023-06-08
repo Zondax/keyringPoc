@@ -27,7 +27,7 @@ service KeyringService {
 you can check all the [proto messages](proto/keyringPoc/keyring/v1/request.proto) under the proto dir.
 
 
-The [keystore](keyring/keyStore/keyStore.go) fulfils the [cosmos-sdk keyring](https://github.com/cosmos/cosmos-sdk/blob/v0.47.3-rc.0/crypto/keyring/keyring.go)
+The [keystore](keyring/keyStore/keyStore.go) fulfils the [cosmos-sdk keyring](https://github.com/cosmos/cosmos-sdk/blob/v0.47.2/crypto/keyring/keyring.go#L54-L101)
 interface but only the following methods have been implemented:
 ```go
     Backend() string
@@ -42,7 +42,7 @@ To compile the protobuf files, run:
 
 `make proto-gen`
 
-This will generate the necessary go and python files.
+This will generate the necessary Go and python files.
 
 
 ## Use
@@ -117,3 +117,7 @@ However, since the SignatureAlgo information cannot be sent over gRPC, and the p
 secp256k1, a potential solution would be to include the Name() of the algorithm as part of the request. In this
 scenario, it would be reasonable to refactor the SDK to pass the algorithm as a string in those methods. Then, a lookup
 can be performed on a map to obtain the corresponding SignatureAlgo based on the provided string.
+
+### Plugin Subprocess
+To ensure proper termination of the plugins alongside the main process, it would be beneficial to extend the keyring
+with a Close() method. 

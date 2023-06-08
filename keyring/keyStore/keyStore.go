@@ -113,9 +113,10 @@ func (k PluginsKeyStore) NewMnemonic(uid string, language keyring.Language, hdPa
 
 func (k PluginsKeyStore) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (*keyring.Record, error) {
 	res, err := k.backEnd.NewAccount(&types.NewAccountRequest{
-		Uid:      uid,
-		Mnemonic: mnemonic,
-		Hdpath:   hdPath,
+		Uid:             uid,
+		Mnemonic:        mnemonic,
+		Bip39Passphrase: bip39Passphrase,
+		Hdpath:          hdPath,
 	})
 	if err != nil {
 		return nil, err
