@@ -26,6 +26,10 @@ func (s Server) NewAccount(ctx context.Context, r *types.NewAccountRequest) (*ty
 	return s.Impl.NewAccount(r)
 }
 
-func (s Server) Sign(ctx context.Context, r *types.NewSignRequest) (*types.NewSignResponse, error) {
+func (s Server) Sign(ctx context.Context, r *types.SignRequest) (*types.SignResponse, error) {
 	return s.Impl.Sign(r)
+}
+
+func (s Server) SaveOffline(ctx context.Context, r *types.SaveOfflineRequest) (*types.SaveOfflineResponse, error) {
+	return s.Impl.SaveOffline(r)
 }

@@ -30,7 +30,7 @@ class Empty(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class BackendRequest(betterproto.Message):
-    f: "Empty" = betterproto.message_field(1)
+    pass
 
 
 @dataclass(eq=False, repr=False)
@@ -62,16 +62,27 @@ class NewAccountResponse(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
-class NewSignRequest(betterproto.Message):
+class SignRequest(betterproto.Message):
     uid: str = betterproto.string_field(1)
     msg: bytes = betterproto.bytes_field(2)
     sign_mode: "__cosmos_tx_signing_v1_beta1__.SignMode" = betterproto.enum_field(3)
 
 
 @dataclass(eq=False, repr=False)
-class NewSignResponse(betterproto.Message):
+class SignResponse(betterproto.Message):
     msg: bytes = betterproto.bytes_field(1)
+    record: bytes = betterproto.bytes_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class SaveOfflineRequest(betterproto.Message):
+    uid: str = betterproto.string_field(1)
     pub_key: "betterproto_lib_google_protobuf.Any" = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class SaveOfflineResponse(betterproto.Message):
+    record: bytes = betterproto.bytes_field(1)
 
 
 class KeyringServiceStub(betterproto.ServiceStub):
@@ -128,16 +139,33 @@ class KeyringServiceStub(betterproto.ServiceStub):
 
     async def sign(
         self,
-        new_sign_request: "NewSignRequest",
+        sign_request: "SignRequest",
         *,
         timeout: Optional[float] = None,
         deadline: Optional["Deadline"] = None,
         metadata: Optional["MetadataLike"] = None
-    ) -> "NewSignResponse":
+    ) -> "SignResponse":
         return await self._unary_unary(
             "/keyring.v1.KeyringService/Sign",
-            new_sign_request,
-            NewSignResponse,
+            sign_request,
+            SignResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def save_offline(
+        self,
+        save_offline_request: "SaveOfflineRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "SaveOfflineResponse":
+        return await self._unary_unary(
+            "/keyring.v1.KeyringService/SaveOffline",
+            save_offline_request,
+            SaveOfflineResponse,
             timeout=timeout,
             deadline=deadline,
             metadata=metadata,
@@ -156,7 +184,12 @@ class KeyringServiceBase(ServiceBase):
     ) -> "NewAccountResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
-    async def sign(self, new_sign_request: "NewSignRequest") -> "NewSignResponse":
+    async def sign(self, sign_request: "SignRequest") -> "SignResponse":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def save_offline(
+        self, save_offline_request: "SaveOfflineRequest"
+    ) -> "SaveOfflineResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
     async def __rpc_backend(
@@ -181,10 +214,17 @@ class KeyringServiceBase(ServiceBase):
         await stream.send_message(response)
 
     async def __rpc_sign(
-        self, stream: "grpclib.server.Stream[NewSignRequest, NewSignResponse]"
+        self, stream: "grpclib.server.Stream[SignRequest, SignResponse]"
     ) -> None:
         request = await stream.recv_message()
         response = await self.sign(request)
+        await stream.send_message(response)
+
+    async def __rpc_save_offline(
+        self, stream: "grpclib.server.Stream[SaveOfflineRequest, SaveOfflineResponse]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.save_offline(request)
         await stream.send_message(response)
 
     def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
@@ -210,7 +250,13 @@ class KeyringServiceBase(ServiceBase):
             "/keyring.v1.KeyringService/Sign": grpclib.const.Handler(
                 self.__rpc_sign,
                 grpclib.const.Cardinality.UNARY_UNARY,
-                NewSignRequest,
-                NewSignResponse,
+                SignRequest,
+                SignResponse,
+            ),
+            "/keyring.v1.KeyringService/SaveOffline": grpclib.const.Handler(
+                self.__rpc_save_offline,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                SaveOfflineRequest,
+                SaveOfflineResponse,
             ),
         }

@@ -12,5 +12,7 @@ service KeyringService {
     rpc Key(KeyRequest) returns (KeyResponse);
     rpc NewAccount(NewAccountRequest) returns (NewAccountResponse);
 
-    rpc Sign(NewSignRequest) returns (NewSignResponse);
+    rpc Sign(SignRequest) returns (SignResponse);
+
+    rpc SaveOffline(SaveOfflineRequest) returns (SaveOfflineResponse);
 }

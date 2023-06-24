@@ -10,9 +10,7 @@ import "cosmos/tx/signing/v1beta1/signing.proto";
 
 message Empty {}
 
-message BackendRequest {
-  Empty f = 1;
-}
+message BackendRequest {}
 
 message BackendResponse {
   string backend = 1;
@@ -37,14 +35,22 @@ message NewAccountResponse {
   cosmos.crypto.keyring.v1.Record record = 1;
 }
 
-message NewSignRequest {
+message SignRequest {
   string uid = 1;
   bytes msg = 2;
   cosmos.tx.signing.v1beta1.SignMode signMode = 3;
 }
 
-message NewSignResponse {
+message SignResponse {
   bytes msg = 1;
-  google.protobuf.Any pubKey = 2;
+  bytes record = 2;
+}
 
+message SaveOfflineRequest {
+  string uid = 1;
+  google.protobuf.Any pubKey = 2;
+}
+
+message SaveOfflineResponse {
+  bytes record = 1;
 }
