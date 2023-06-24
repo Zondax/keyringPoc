@@ -6,6 +6,8 @@ import (
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/crypto/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankcodec "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -269,7 +271,7 @@ func TestPluginsKeyStore_Sign(t *testing.T) {
 		},
 		{
 			name: "sign with python plugin",
-			k:    NewKeyring(goPlugin, cdc),
+			k:    NewKeyring(pythonPlugin, cdc),
 			args: args{
 				uid: "test",
 				msg: []byte("MESSAGE TO SIGN"),
@@ -282,9 +284,10 @@ func TestPluginsKeyStore_Sign(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, err := tt.k.Sign(tt.args.uid, tt.args.msg)
+			got, pub, err := tt.k.Sign(tt.args.uid, tt.args.msg)
 			require.NoError(t, err)
 			require.NotNil(t, got)
+			require.NotNil(t, pub)
 			ck := cosmosKeyring.NewInMemory(cdc)
 			_, err = ck.NewAccount(tt.args.uid,
 				tt.cosmosArgs.mnemonic,
@@ -292,9 +295,46 @@ func TestPluginsKeyStore_Sign(t *testing.T) {
 				"m/44'/118'/0'/0/0",
 				hd.Secp256k1)
 			require.NoError(t, err)
-			cosmosSign, _, err := ck.Sign(tt.args.uid, tt.args.msg)
+			cosmosSign, pub, err := ck.Sign(tt.args.uid, tt.args.msg)
 			require.NoError(t, err)
+			require.NotNil(t, pub)
 			require.Equal(t, cosmosSign, got)
+		})
+	}
+}
+
+func TestPluginsKeyStore_SaveOfflineKey(t *testing.T) {
+	type args struct {
+		uid    string
+		pubkey types.PrivKey
+	}
+	tests := []struct {
+		name    string
+		k       cosmosKeyring.Keyring
+		args    args
+		want    *cosmosKeyring.Record
+		wantErr bool
+	}{
+		{
+			name: "save offline",
+			k:    NewKeyring(goPlugin, cdc),
+			args: args{
+				uid:    "offlineTest",
+				pubkey: secp256k1.GenPrivKey(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.k.SaveOfflineKey(tt.args.uid, tt.args.pubkey.PubKey())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SaveOfflineKey() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			ck := cosmosKeyring.NewInMemory(cdc)
+			cosmosGot, err := ck.SaveOfflineKey(tt.args.uid, tt.args.pubkey.PubKey())
+			require.NoError(t, err)
+			require.Equal(t, got, cosmosGot)
 		})
 	}
 }

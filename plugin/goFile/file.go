@@ -104,7 +104,7 @@ func extractPrivKeyFromLocal(rl *cosmosKeyring.Record_Local) (cryptotypes.PrivKe
 	return priv, nil
 }
 
-func (k fileKeyring) Sign(r *keyring2.NewSignRequest) (*keyring2.NewSignResponse, error) {
+func (k fileKeyring) Sign(r *keyring2.SignRequest) (*keyring2.SignResponse, error) {
 	item, err := os.ReadFile(k.dir + fmt.Sprintf("/%s.%s", r.Uid, "info"))
 	if err != nil {
 		return nil, err
@@ -127,13 +127,13 @@ func (k fileKeyring) Sign(r *keyring2.NewSignRequest) (*keyring2.NewSignResponse
 			return nil, err
 		}
 
-		privKey, err := codectypes.NewAnyWithValue(priv.PubKey())
+		//pubKey, err := codectypes.NewAnyWithValue(priv.PubKey())
 		if err != nil {
 			return nil, errors.New("sdfd")
 		}
-		return &keyring2.NewSignResponse{
+		return &keyring2.SignResponse{
 			Msg:    sig,
-			PubKey: privKey,
+			Record: item,
 		}, nil
 
 	default:
@@ -144,6 +144,20 @@ func (k fileKeyring) Sign(r *keyring2.NewSignRequest) (*keyring2.NewSignResponse
 		return nil, errors.New("cannot sign with offline keys")
 	}
 
+}
+
+func (k fileKeyring) SaveOffline(r *keyring2.SaveOfflineRequest) (*keyring2.SaveOfflineResponse, error) {
+	recordOffline := &cosmosKeyring.Record_Offline{}
+	recordOfflineItem := &cosmosKeyring.Record_Offline_{recordOffline}
+
+	record := &cosmosKeyring.Record{r.Uid, r.PubKey, recordOfflineItem}
+	// TODO: save file
+	serializedRecord, err := k.cdc.Marshal(record)
+	if err != nil {
+		return nil, err
+	}
+
+	return &keyring2.SaveOfflineResponse{Record: serializedRecord}, nil
 }
 
 func main() {

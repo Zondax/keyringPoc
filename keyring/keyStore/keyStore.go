@@ -1,7 +1,9 @@
 package keyStore
 
 import (
+	"errors"
 	"fmt"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"os"
 	"os/exec"
 
@@ -130,8 +132,25 @@ func (k PluginsKeyStore) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, h
 }
 
 func (k PluginsKeyStore) SaveOfflineKey(uid string, pubkey cyptoTypes.PubKey) (*keyring.Record, error) {
-	//TODO implement me
-	panic("implement me")
+	pb, err := codectypes.NewAnyWithValue(pubkey)
+	if err != nil {
+		return nil, err
+	}
+	res, err := k.backEnd.SaveOffline(&types.SaveOfflineRequest{
+		Uid:    uid,
+		PubKey: pb,
+	})
+	if err != nil {
+		return nil, err
+	}
+	record := new(keyring.Record)
+	err = k.cdc.Unmarshal(res.Record, record)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return record, nil
 }
 
 func (k PluginsKeyStore) SaveMultisig(uid string, pubkey cyptoTypes.PubKey) (*keyring.Record, error) {
@@ -140,7 +159,7 @@ func (k PluginsKeyStore) SaveMultisig(uid string, pubkey cyptoTypes.PubKey) (*ke
 }
 
 func (k PluginsKeyStore) Sign(uid string, msg []byte) ([]byte, cyptoTypes.PubKey, error) {
-	r, err := k.backEnd.Sign(&types.NewSignRequest{
+	r, err := k.backEnd.Sign(&types.SignRequest{
 		Uid:      uid,
 		Msg:      msg,
 		SignMode: 0,
@@ -148,7 +167,29 @@ func (k PluginsKeyStore) Sign(uid string, msg []byte) ([]byte, cyptoTypes.PubKey
 	if err != nil {
 		return nil, nil, err
 	}
-	return r.GetMsg(), nil, nil
+	record := new(keyring.Record)
+	err = k.cdc.Unmarshal(r.Record, record)
+	if err != nil {
+		return nil, nil, err
+	}
+	priv, err := extractPrivKeyFromLocal(record.GetLocal())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r.GetMsg(), priv.PubKey(), nil
+}
+func extractPrivKeyFromLocal(rl *keyring.Record_Local) (cyptoTypes.PrivKey, error) {
+	if rl.PrivKey == nil {
+		return nil, errors.New("no priv key")
+	}
+
+	priv, ok := rl.PrivKey.GetCachedValue().(cyptoTypes.PrivKey)
+	if !ok {
+		return nil, errors.New("no cached value")
+	}
+
+	return priv, nil
 }
 
 func (k PluginsKeyStore) SignByAddress(address sdk.Address, msg []byte) ([]byte, cyptoTypes.PubKey, error) {

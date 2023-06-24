@@ -20,6 +20,10 @@ func (c *Client) NewAccount(r *types.NewAccountRequest) (*types.NewAccountRespon
 	return c.Client.NewAccount(context.Background(), r)
 }
 
-func (c *Client) Sign(r *types.NewSignRequest) (*types.NewSignResponse, error) {
+func (c *Client) Sign(r *types.SignRequest) (*types.SignResponse, error) {
 	return c.Client.Sign(context.Background(), r)
+}
+
+func (c *Client) SaveOffline(r *types.SaveOfflineRequest) (*types.SaveOfflineResponse, error) {
+	return c.Client.SaveOffline(context.Background(), r)
 }

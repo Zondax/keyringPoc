@@ -42,11 +42,11 @@ class PymemService(keyring.KeyringServiceBase):
             f.write(bytes(record))
         return keyring.NewAccountResponse(record=record)
 
-    async def sign(self, new_sign_request: "keyring.NewSignRequest") -> "keyring.NewSignResponse":
+    async def sign(self, new_sign_request: "keyring.SignRequest") -> "keyring.SignResponse":
         with open(self.dir + new_sign_request.uid, "rb") as f:
             bytes_read = f.read()
         record = cosmos_keyring.Record.FromString(bytes_read)
-        return keyring.NewSignResponse(
+        return keyring.SignResponse(
             msg=secp256k1.sign(record, new_sign_request.msg)
         )
 

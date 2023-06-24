@@ -5,6 +5,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
@@ -188,24 +189,34 @@ func Test_memKeyring_NewAccount(t *testing.T) {
 }
 
 func Test_memKeyring_Sign(t *testing.T) {
-	type fields struct {
-		cdc codec.Codec
-	}
 	type args struct {
-		r *keyring2.NewSignRequest
+		r *keyring2.SignRequest
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
-		want    *keyring2.NewSignResponse
+		want    *keyring2.SignResponse
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "sign message",
+			args: args{r: &keyring2.SignRequest{
+				Uid:      "test",
+				Msg:      []byte("this is a string"),
+				SignMode: 0,
+			}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k := newFileKeyring()
+			_, err := k.NewAccount(&keyring2.NewAccountRequest{
+				Uid:             tt.args.r.Uid,
+				Mnemonic:        "once capable omit cancel ghost mobile mean surface neither tissue life huge knock rebuild work enemy avoid bargain swarm paper comic follow blade tribe",
+				Bip39Passphrase: "",
+				Hdpath:          "m/44'/118'/0'/0/0",
+			})
+			require.NoError(t, err)
 			got, err := k.Sign(tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Sign() error = %v, wantErr %v", err, tt.wantErr)
@@ -236,6 +247,37 @@ func Test_newMemKeyring(t *testing.T) {
 			if got := newFileKeyring(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newMemKeyring() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_fileKeyring_SaveOffline(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyName string
+		want    *keyring2.SaveOfflineResponse
+		wantErr bool
+	}{
+		{
+			name:    "save offline",
+			keyName: "offlineTesting",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := newFileKeyring()
+			pubKey := secp256k1.GenPrivKey().PubKey()
+			pb, err := codectypes.NewAnyWithValue(pubKey)
+			require.NoError(t, err)
+			require.NotNil(t, pb)
+			//pubb := pb.GetCachedValue().(types.PubKey)
+			//pb.TypeUrl = pubb.Type()
+			got, err := k.SaveOffline(&keyring2.SaveOfflineRequest{
+				Uid:    tt.keyName,
+				PubKey: pb,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, got)
 		})
 	}
 }
