@@ -127,13 +127,13 @@ func (k fileKeyring) Sign(r *keyring2.SignRequest) (*keyring2.SignResponse, erro
 			return nil, err
 		}
 
-		//pubKey, err := codectypes.NewAnyWithValue(priv.PubKey())
+		pubkey, err := codectypes.NewAnyWithValue(priv.PubKey())
 		if err != nil {
 			return nil, errors.New("sdfd")
 		}
 		return &keyring2.SignResponse{
 			Msg:    sig,
-			Record: item,
+			PubKey: pubkey,
 		}, nil
 
 	default:

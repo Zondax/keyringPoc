@@ -55,3 +55,14 @@ def new_record(uid: str, seed: str, hdpath: str, bip39_passphrase: str) -> cosmo
             )
         )
     )
+
+
+def new_record_offline(uid: str, pub_key: betterproto_lib_google_protobuf.Any) -> cosmos_keyring.Record:
+    return cosmos_keyring.Record(
+        name=uid,
+        pub_key=betterproto_lib_google_protobuf.Any(
+            type_url=pub_key.type_url,
+            value=pub_key.value,
+        ),
+        offline=cosmos_keyring.RecordOffline()
+    )
