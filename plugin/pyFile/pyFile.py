@@ -39,7 +39,8 @@ class PymemService(keyring.KeyringServiceBase):
                                       new_account_request.bip39_passphrase)
         record = marshall_record(record)
         with open(self.dir + new_account_request.uid, 'wb') as f:
-            f.write(bytes(record))
+            # f.write(bytes(record))
+            f.write(record.__bytes__())
         return keyring.NewAccountResponse(record=record)
 
     async def sign(self, new_sign_request: "keyring.SignRequest") -> "keyring.SignResponse":
@@ -47,8 +48,14 @@ class PymemService(keyring.KeyringServiceBase):
             bytes_read = f.read()
         record = cosmos_keyring.Record.FromString(bytes_read)
         return keyring.SignResponse(
-            msg=secp256k1.sign(record, new_sign_request.msg)
+            msg=secp256k1.sign(record, new_sign_request.msg),
+            pub_key=record.pub_key
         )
+
+    async def save_offline(self, save_offline_request: "keyring.SaveOfflineRequest") -> "keyring.SaveOfflineResponse":
+        offline_record = secp256k1.new_record_offline(save_offline_request.uid, save_offline_request.pub_key)
+        # TODO: save file
+        return keyring.SaveOfflineResponse(record=offline_record.__bytes__())
 
 
 async def serve():

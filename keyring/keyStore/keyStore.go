@@ -167,17 +167,13 @@ func (k PluginsKeyStore) Sign(uid string, msg []byte) ([]byte, cyptoTypes.PubKey
 	if err != nil {
 		return nil, nil, err
 	}
-	record := new(keyring.Record)
-	err = k.cdc.Unmarshal(r.Record, record)
-	if err != nil {
-		return nil, nil, err
-	}
-	priv, err := extractPrivKeyFromLocal(record.GetLocal())
+	var pubkey cyptoTypes.PubKey
+	err = k.cdc.UnpackAny(r.PubKey, &pubkey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r.GetMsg(), priv.PubKey(), nil
+	return r.GetMsg(), pubkey, nil
 }
 func extractPrivKeyFromLocal(rl *keyring.Record_Local) (cyptoTypes.PrivKey, error) {
 	if rl.PrivKey == nil {

@@ -72,7 +72,7 @@ func TestPluginsKeyStore_NewAccount(t *testing.T) {
 	}{
 		{
 			name: "go plugin",
-			k:    NewKeyring("../../build/goFile", cdc),
+			k:    NewKeyring(goPlugin, cdc),
 			args: args{
 				uid:      "test",
 				mnemonic: "spare august spell toilet open wonder coffee tiger prepare size option talent citizen hungry vote swarm embark citizen hedgehog age giggle foster flat police",
@@ -295,10 +295,11 @@ func TestPluginsKeyStore_Sign(t *testing.T) {
 				"m/44'/118'/0'/0/0",
 				hd.Secp256k1)
 			require.NoError(t, err)
-			cosmosSign, pub, err := ck.Sign(tt.args.uid, tt.args.msg)
+			cosmosSign, cosmosPub, err := ck.Sign(tt.args.uid, tt.args.msg)
 			require.NoError(t, err)
 			require.NotNil(t, pub)
 			require.Equal(t, cosmosSign, got)
+			require.Equal(t, cosmosPub, pub)
 		})
 	}
 }
@@ -309,15 +310,21 @@ func TestPluginsKeyStore_SaveOfflineKey(t *testing.T) {
 		pubkey types.PrivKey
 	}
 	tests := []struct {
-		name    string
-		k       cosmosKeyring.Keyring
-		args    args
-		want    *cosmosKeyring.Record
-		wantErr bool
+		name string
+		k    cosmosKeyring.Keyring
+		args args
 	}{
 		{
-			name: "save offline",
+			name: "save offline go",
 			k:    NewKeyring(goPlugin, cdc),
+			args: args{
+				uid:    "offlineTest",
+				pubkey: secp256k1.GenPrivKey(),
+			},
+		},
+		{
+			name: "save offline python",
+			k:    NewKeyring(pythonPlugin, cdc),
 			args: args{
 				uid:    "offlineTest",
 				pubkey: secp256k1.GenPrivKey(),
@@ -327,10 +334,8 @@ func TestPluginsKeyStore_SaveOfflineKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.k.SaveOfflineKey(tt.args.uid, tt.args.pubkey.PubKey())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SaveOfflineKey() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			require.NoError(t, err)
+			require.NotNil(t, got)
 			ck := cosmosKeyring.NewInMemory(cdc)
 			cosmosGot, err := ck.SaveOfflineKey(tt.args.uid, tt.args.pubkey.PubKey())
 			require.NoError(t, err)

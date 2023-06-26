@@ -71,7 +71,7 @@ class SignRequest(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class SignResponse(betterproto.Message):
     msg: bytes = betterproto.bytes_field(1)
-    record: bytes = betterproto.bytes_field(2)
+    pub_key: "betterproto_lib_google_protobuf.Any" = betterproto.message_field(2)
 
 
 @dataclass(eq=False, repr=False)

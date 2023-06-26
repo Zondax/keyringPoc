@@ -43,7 +43,7 @@ message SignRequest {
 
 message SignResponse {
   bytes msg = 1;
-  bytes record = 2;
+  google.protobuf.Any pubKey = 2;
 }
 
 message SaveOfflineRequest {
