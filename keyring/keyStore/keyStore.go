@@ -123,6 +123,16 @@ func (k PluginsKeyStore) NewAccount(uid, mnemonic, bip39Passphrase, hdPath strin
 	if err != nil {
 		return nil, err
 	}
+	var pubkey cyptoTypes.PubKey
+	err = k.cdc.UnpackAny(res.Record.PubKey, &pubkey)
+	if err != nil {
+		return nil, err
+	}
+	var priv cyptoTypes.PrivKey
+	err = k.cdc.UnpackAny(res.Record.GetLocal().PrivKey, &priv)
+	if err != nil {
+		return nil, err
+	}
 	return res.Record, nil
 }
 
