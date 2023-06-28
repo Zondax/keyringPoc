@@ -4,9 +4,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptoCodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmosKeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 	keyring2 "github.com/zondax/keyringPoc/keyring/types"
@@ -33,31 +33,49 @@ func newMnemonic() string {
 
 func Test_extractPrivKeyFromLocal(t *testing.T) {
 	type args struct {
-		rl *cosmosKeyring.Record_Local
+		mnemonic string
+		hdPath   string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    types.PrivKey
-		wantErr bool
+		name string
+		args args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "local priv key",
+			args: args{
+				mnemonic: "once capable omit cancel ghost mobile mean surface neither tissue life huge knock rebuild work enemy avoid bargain swarm paper comic follow blade tribe",
+				hdPath:   hdPath,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := extractPrivKeyFromLocal(tt.args.rl)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("extractPrivKeyFromLocal() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("extractPrivKeyFromLocal() got = %v, want %v", got, tt.want)
-			}
+			derivedPriv, err := hd.Secp256k1.Derive()(tt.args.mnemonic, "", tt.args.hdPath)
+			require.NoError(t, err)
+			require.NotEmpty(t, derivedPriv)
+			priv := hd.Secp256k1.Generate()(derivedPriv)
+
+			v, err := codectypes.NewAnyWithValue(priv)
+			require.NoError(t, err)
+			require.NotNil(t, v)
+
+			recordLocal := &cosmosKeyring.Record_Local{v}
+			recordLocalItem := &cosmosKeyring.Record_Local_{recordLocal}
+
+			pk, err := codectypes.NewAnyWithValue(priv.PubKey())
+			require.NoError(t, err)
+			require.NotNil(t, pk)
+
+			record := &cosmosKeyring.Record{"test", pk, recordLocalItem}
+			got, err := extractPrivKeyFromLocal(record.GetLocal())
+			require.NoError(t, err)
+			require.NotNil(t, got)
+			require.Equal(t, priv, got)
 		})
 	}
 }
 
-func Test_memKeyring_Backend(t *testing.T) {
+func Test_file_Backend(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
 	}
@@ -98,7 +116,7 @@ func Test_memKeyring_Backend(t *testing.T) {
 	}
 }
 
-func Test_memKeyring_Key(t *testing.T) {
+func Test_file_Key(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
 		db  map[string][]byte
@@ -142,7 +160,7 @@ func Test_memKeyring_Key(t *testing.T) {
 	}
 }
 
-func Test_memKeyring_NewAccount(t *testing.T) {
+func Test_file_NewAccount(t *testing.T) {
 	type fields struct {
 		cdc codec.Codec
 	}
@@ -188,14 +206,13 @@ func Test_memKeyring_NewAccount(t *testing.T) {
 	}
 }
 
-func Test_memKeyring_Sign(t *testing.T) {
+func Test_file_Sign(t *testing.T) {
 	type args struct {
 		r *keyring2.SignRequest
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *keyring2.SignResponse
 		wantErr bool
 	}{
 		{
@@ -222,14 +239,14 @@ func Test_memKeyring_Sign(t *testing.T) {
 				t.Errorf("Sign() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Sign() got = %v, want %v", got, tt.want)
-			}
+			require.NoError(t, err)
+			require.NotNil(t, got)
+			require.NotEmpty(t, got)
 		})
 	}
 }
 
-func Test_newMemKeyring(t *testing.T) {
+func Test_newfile(t *testing.T) {
 	tests := []struct {
 		name string
 		want *fileKeyring
@@ -244,9 +261,8 @@ func Test_newMemKeyring(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newFileKeyring(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newMemKeyring() = %v, want %v", got, tt.want)
-			}
+			got := newFileKeyring()
+			require.Equal(t, got, tt.want)
 		})
 	}
 }
@@ -270,8 +286,6 @@ func Test_fileKeyring_SaveOffline(t *testing.T) {
 			pb, err := codectypes.NewAnyWithValue(pubKey)
 			require.NoError(t, err)
 			require.NotNil(t, pb)
-			//pubb := pb.GetCachedValue().(types.PubKey)
-			//pb.TypeUrl = pubb.Type()
 			got, err := k.SaveOffline(&keyring2.SaveOfflineRequest{
 				Uid:    tt.keyName,
 				PubKey: pb,
